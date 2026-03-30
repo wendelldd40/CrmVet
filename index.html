@@ -261,9 +261,20 @@ nav{padding:.875rem .75rem;flex:1;overflow-y:auto;position:relative;z-index:1;}
 .kb-card{
   background:var(--surface);border-radius:var(--r-sm);padding:.875rem;
   margin-bottom:.625rem;box-shadow:var(--shadow);border:1px solid var(--border);
-  transition:transform .15s,box-shadow .15s;cursor:default;
+  transition:transform .15s,box-shadow .15s,opacity .15s;cursor:grab;
+  position:relative;
 }
 .kb-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.kb-card.dragging{opacity:.35;cursor:grabbing;transform:rotate(1.5deg) scale(1.02);box-shadow:var(--shadow-lg);}
+.kb-card.drag-over-top::before{content:'';position:absolute;top:-4px;left:0;right:0;height:3px;background:#2e7d5e;border-radius:99px;}
+.kb-card.drag-over-bottom::after{content:'';position:absolute;bottom:-4px;left:0;right:0;height:3px;background:#2e7d5e;border-radius:99px;}
+.kb-col-drop-zone{
+  min-height:60px;border-radius:var(--r-sm);
+  transition:background .15s,border .15s;
+  border:2px dashed transparent;
+}
+.kb-col-drop-zone.drag-over{background:rgba(46,125,94,.07);border-color:rgba(46,125,94,.35);}
+.kb-col.col-drag-over .kb-col-drop-zone{background:rgba(46,125,94,.07);border-color:rgba(46,125,94,.35);}
 .kb-card h4{font-size:.875rem;font-weight:600;margin-bottom:3px;}
 .kb-card-date{font-size:.625rem;font-family:var(--font-mono);color:var(--text3);}
 .kb-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
@@ -550,7 +561,7 @@ select option{font-family:var(--font-body);}
       <table>
         <thead>
           <tr>
-            <th>Perfil</th><th>Funil</th><th>Etapa</th><th>Origem</th><th>Data</th><th>Ações</th>
+            <th>Perfil</th><th>Contato</th><th>Funil</th><th>Etapa</th><th>Origem</th><th>Data</th><th>Ações</th>
           </tr>
         </thead>
         <tbody id="leads-tbody"></tbody>
@@ -563,13 +574,20 @@ select option{font-family:var(--font-body);}
 
 <!-- ═══════ MODAL: NOVO LEAD ═══════ -->
 <div class="mo" id="mo-lead">
-  <div class="modal">
+  <div class="modal modal-lg">
     <div class="modal-hd">
       <h3>Novo Lead</h3>
       <p>Adicione um contato ao funil de vendas</p>
     </div>
     <div class="modal-body">
-      <div class="field"><label>@ Instagram</label><input type="text" id="li-handle" placeholder="@cliente"></div>
+      <div class="field-row">
+        <div class="field"><label>Nome completo</label><input type="text" id="li-name" placeholder="Ex: Maria Silva"></div>
+        <div class="field"><label>@ Instagram</label><input type="text" id="li-handle" placeholder="@cliente"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>📱 WhatsApp / Telefone</label><input type="tel" id="li-phone" placeholder="(79) 99999-9999"></div>
+        <div class="field"><label>✉️ E-mail</label><input type="email" id="li-email" placeholder="email@exemplo.com"></div>
+      </div>
       <div class="field-row">
         <div class="field">
           <label>Funil</label>
@@ -593,10 +611,68 @@ select option{font-family:var(--font-body);}
         </div>
         <div class="field"><label>Data</label><input type="date" id="li-date"></div>
       </div>
+      <div class="field"><label>📝 Observações</label><textarea id="li-notes" placeholder="Anotações sobre o lead..." style="height:72px;resize:vertical;"></textarea></div>
     </div>
     <div class="modal-ft">
       <button class="btn" onclick="closeMo('mo-lead')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveLead()">Salvar Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL: DETALHES DO LEAD ═══════ -->
+<div class="mo" id="mo-lead-detail">
+  <div class="modal modal-lg">
+    <div class="modal-hd" style="display:flex;align-items:center;gap:12px;">
+      <div id="ld-avatar" style="width:44px;height:44px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:.875rem;font-weight:700;color:#fff;flex-shrink:0;font-family:var(--font-mono);"></div>
+      <div style="flex:1;min-width:0;">
+        <h3 id="ld-name" style="margin:0;"></h3>
+        <p id="ld-handle" style="margin:0;font-family:var(--font-mono);font-size:.75rem;color:var(--text3);"></p>
+      </div>
+      <div id="ld-stage-badge" style="flex-shrink:0;"></div>
+    </div>
+    <div class="modal-body" style="padding-top:.75rem;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:1rem;">
+        <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.75rem;">
+          <span style="font-size:1.25rem;">📱</span>
+          <div>
+            <div style="font-size:.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:2px;">WhatsApp / Telefone</div>
+            <div id="ld-phone" style="font-size:.875rem;font-weight:600;"></div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.75rem;">
+          <span style="font-size:1.25rem;">✉️</span>
+          <div>
+            <div style="font-size:.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:2px;">E-mail</div>
+            <div id="ld-email" style="font-size:.875rem;font-weight:600;word-break:break-all;"></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.625rem;margin-bottom:1rem;">
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.625rem .875rem;">
+          <div style="font-size:.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:3px;">Funil</div>
+          <div id="ld-funnel" style="font-size:.8125rem;font-weight:600;"></div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.625rem .875rem;">
+          <div style="font-size:.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:3px;">Origem</div>
+          <div id="ld-origin-detail" style="font-size:.8125rem;font-weight:600;"></div>
+        </div>
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.625rem .875rem;">
+          <div style="font-size:.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:3px;">Data</div>
+          <div id="ld-date-detail" style="font-size:.8125rem;font-weight:600;font-family:var(--font-mono);"></div>
+        </div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-sm);padding:.75rem;">
+        <div style="font-size:.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px;">📝 Observações</div>
+        <div id="ld-notes-detail" style="font-size:.8125rem;color:var(--text2);white-space:pre-wrap;line-height:1.6;"></div>
+      </div>
+    </div>
+    <div class="modal-ft" style="justify-content:space-between;">
+      <button class="btn btn-sm btn-ghost btn-danger" id="ld-delete-btn">✕ Excluir lead</button>
+      <div style="display:flex;gap:7px;">
+        <button class="btn" onclick="closeMo('mo-lead-detail')">Fechar</button>
+        <button class="btn btn-primary" id="ld-edit-btn">✏️ Editar</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1019,40 +1095,153 @@ function renderKanban(){
 
   document.getElementById('kb-board').innerHTML = f.stages.map(stage=>{
     const stageLeads = fLeads.filter(l=>l.stageId===stage.id);
-    const cards = stageLeads.length===0
-      ? `<div class="empty" style="padding:1.5rem .5rem;"><svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:var(--text3);fill:none;margin-bottom:.5rem;opacity:.35"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p style="font-size:.75rem;">Vazio</p></div>`
-      : stageLeads.map(l=>{
-          const orig = ORIGIN_LABELS[l.origin] || l.origin;
-          const isLast = f.stages[f.stages.length-1].id === stage.id;
-          return `
-            <div class="kb-card">
-              <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">
-                <div style="width:24px;height:24px;border-radius:99px;background:${avatarColor(l.handle)};display:flex;align-items:center;justify-content:center;font-size:.5625rem;font-weight:700;color:#fff;font-family:var(--font-mono);flex-shrink:0;">${l.handle.replace('@','').slice(0,2).toUpperCase()}</div>
-                <h4 style="font-size:.8125rem;">${l.handle}</h4>
-              </div>
-              <div class="kb-card-date">${fmt(l.date)}</div>
-              <div class="kb-card-footer">
-                <span class="tag" style="background:rgba(${hexToRgb(avatarColor(l.handle))},.1);color:${avatarColor(l.handle)}">${orig}</span>
-                ${isLast
-                  ? `<span style="font-size:.625rem;color:var(--text3);">✅ Fechado</span>`
-                  : `<button class="btn btn-sm btn-ghost" onclick="openMoveModal('${l.id}')" style="padding:2px 7px;font-size:.6875rem;">Mover →</button>`
-                }
-              </div>
-            </div>
-          `;
-        }).join('');
+    const cardsHtml = stageLeads.map(l=>{
+      const orig = ORIGIN_LABELS[l.origin] || l.origin;
+      const isLast = f.stages[f.stages.length-1].id === stage.id;
+      return `
+        <div class="kb-card" draggable="true" data-lead-id="${l.id}" data-stage-id="${stage.id}">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">
+            <div style="width:24px;height:24px;border-radius:99px;background:${avatarColor(l.handle)};display:flex;align-items:center;justify-content:center;font-size:.5625rem;font-weight:700;color:#fff;font-family:var(--font-mono);flex-shrink:0;">${(l.name||l.handle).replace('@','').slice(0,2).toUpperCase()}</div>
+            <h4 style="font-size:.8125rem;cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-color:var(--border);" onclick="event.stopPropagation();openLeadDetail('${l.id}')">${l.name || l.handle}</h4>
+            <span style="margin-left:auto;color:var(--text3);font-size:.75rem;cursor:grab;" title="Arrastar">⠿</span>
+          </div>
+          ${l.handle && l.name ? `<div style="font-size:.625rem;font-family:var(--font-mono);color:var(--text3);margin-bottom:2px;">${l.handle}</div>` : ''}
+          <div class="kb-card-date">${fmt(l.date)}</div>
+          <div class="kb-card-footer">
+            <span class="tag" style="background:rgba(${hexToRgb(avatarColor(l.handle))},.1);color:${avatarColor(l.handle)}">${orig}</span>
+            ${isLast
+              ? `<span style="font-size:.625rem;color:var(--text3);">✅ Fechado</span>`
+              : `<button class="btn btn-sm btn-ghost" onclick="openMoveModal('${l.id}')" style="padding:2px 7px;font-size:.6875rem;">Mover →</button>`
+            }
+          </div>
+        </div>
+      `;
+    }).join('');
 
     return `
-      <div class="kb-col">
+      <div class="kb-col" data-stage-id="${stage.id}">
         <div class="kb-col-hd">
           <span class="kb-col-title">${stage.name}</span>
-          <span class="kb-col-badge">${stageLeads.length}</span>
+          <span class="kb-col-badge" id="badge-${stage.id}">${stageLeads.length}</span>
         </div>
         <div class="kb-col-stripe" style="background:${stage.color}"></div>
-        ${cards}
+        <div class="kb-col-drop-zone" data-stage-id="${stage.id}">
+          ${cardsHtml || `<div class="empty" style="padding:1.5rem .5rem;pointer-events:none;"><svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:var(--text3);fill:none;margin-bottom:.5rem;opacity:.35"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p style="font-size:.75rem;">Vazio</p></div>`}
+        </div>
       </div>
     `;
   }).join('');
+
+  initKanbanDrag();
+}
+
+/* ════════════════════════════════
+   KANBAN DRAG-AND-DROP
+════════════════════════════════ */
+function initKanbanDrag(){
+  let dragLeadId   = null;
+  let dragStageId  = null;
+  let dragEl       = null;
+
+  const board = document.getElementById('kb-board');
+
+  board.addEventListener('dragstart', e=>{
+    const card = e.target.closest('.kb-card');
+    if(!card) return;
+    dragLeadId  = card.dataset.leadId;
+    dragStageId = card.dataset.stageId;
+    dragEl      = card;
+    setTimeout(()=>card.classList.add('dragging'), 0);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+
+  board.addEventListener('dragend', e=>{
+    const card = e.target.closest('.kb-card');
+    if(card) card.classList.remove('dragging');
+    // clear all indicators
+    board.querySelectorAll('.drag-over-top,.drag-over-bottom').forEach(el=>el.classList.remove('drag-over-top','drag-over-bottom'));
+    board.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+    board.querySelectorAll('.col-drag-over').forEach(el=>el.classList.remove('col-drag-over'));
+  });
+
+  board.addEventListener('dragover', e=>{
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    // Clear previous indicators
+    board.querySelectorAll('.drag-over-top,.drag-over-bottom').forEach(el=>el.classList.remove('drag-over-top','drag-over-bottom'));
+    board.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
+
+    const targetCard = e.target.closest('.kb-card');
+    const targetZone = e.target.closest('.kb-col-drop-zone');
+
+    if(targetCard && targetCard !== dragEl){
+      const box    = targetCard.getBoundingClientRect();
+      const middle = box.top + box.height / 2;
+      if(e.clientY < middle){
+        targetCard.classList.add('drag-over-top');
+      } else {
+        targetCard.classList.add('drag-over-bottom');
+      }
+    } else if(targetZone){
+      targetZone.classList.add('drag-over');
+    }
+  });
+
+  board.addEventListener('dragleave', e=>{
+    if(!board.contains(e.relatedTarget)){
+      board.querySelectorAll('.drag-over-top,.drag-over-bottom,.drag-over').forEach(el=>{
+        el.classList.remove('drag-over-top','drag-over-bottom','drag-over');
+      });
+    }
+  });
+
+  board.addEventListener('drop', e=>{
+    e.preventDefault();
+    if(!dragLeadId) return;
+
+    const targetCard = e.target.closest('.kb-card');
+    const targetZone = e.target.closest('.kb-col-drop-zone');
+    if(!targetCard && !targetZone) return;
+
+    const newStageId = targetCard
+      ? targetCard.dataset.stageId
+      : targetZone.dataset.stageId;
+
+    if(!newStageId) return;
+
+    const f          = getFunnel(activeFunnelId);
+    const fLeads     = leadsFor(activeFunnelId);
+    const stageLeads = fLeads.filter(l=>l.stageId===newStageId);
+    const lead       = leads.find(l=>l.id===dragLeadId);
+    if(!lead) return;
+
+    // Change stage
+    lead.stageId = newStageId;
+
+    // Determine position within stage
+    if(targetCard && targetCard.dataset.leadId !== dragLeadId){
+      const box    = targetCard.getBoundingClientRect();
+      const middle = box.top + box.height / 2;
+      const insertBefore = e.clientY < middle;
+
+      // Reorder leads array so visual order matches
+      const targetLeadId = targetCard.dataset.leadId;
+      // Remove drag lead from leads
+      leads = leads.filter(l=>l.id!==dragLeadId);
+      const targetIdx = leads.findIndex(l=>l.id===targetLeadId);
+      if(targetIdx===-1){
+        leads.push(lead);
+      } else {
+        leads.splice(insertBefore ? targetIdx : targetIdx+1, 0, lead);
+      }
+    }
+
+    persist();
+    renderKanban();
+    renderDashboard();
+    toast('Lead movido!');
+  });
 }
 
 function setActiveKbFunnel(id){
@@ -1080,21 +1269,31 @@ function renderLeadsTable(){
 
   const tbody = document.getElementById('leads-tbody');
   if(filtered.length===0){
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2.5rem;color:var(--text3);">Nenhum lead encontrado</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2.5rem;color:var(--text3);">Nenhum lead encontrado</td></tr>`;
     return;
   }
 
   tbody.innerHTML = filtered.map(l=>{
     const f = getFunnel(l.funnelId);
     const s = getStage(l.funnelId, l.stageId);
-    const initials = l.handle.replace('@','').slice(0,2).toUpperCase();
+    const initials = (l.name||l.handle).replace('@','').slice(0,2).toUpperCase();
     const avColor = avatarColor(l.handle);
     return `
       <tr>
         <td>
           <div class="td-handle">
             <div class="td-avatar" style="background:${avColor};">${initials}</div>
-            <strong>${l.handle}</strong>
+            <div>
+              <strong style="cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-color:var(--border);" onclick="openLeadDetail('${l.id}')">${l.name || l.handle}</strong>
+              ${l.name && l.handle !== l.name ? `<div style="font-size:.625rem;font-family:var(--font-mono);color:var(--text3);">${l.handle}</div>` : ''}
+            </div>
+          </div>
+        </td>
+        <td>
+          <div style="font-size:.75rem;line-height:1.8;">
+            ${l.phone ? `<div>📱 ${l.phone}</div>` : ''}
+            ${l.email ? `<div style="color:var(--text3);">✉️ ${l.email}</div>` : ''}
+            ${!l.phone && !l.email ? `<span style="color:var(--text3);">—</span>` : ''}
           </div>
         </td>
         <td>
@@ -1109,6 +1308,7 @@ function renderLeadsTable(){
         <td><span style="font-family:var(--font-mono);font-size:.75rem;color:var(--text3);">${fmt(l.date)}</span></td>
         <td>
           <div style="display:flex;gap:5px;">
+            <button class="btn btn-sm" onclick="openLeadDetail('${l.id}')">👁 Ver</button>
             <button class="btn btn-sm" onclick="openMoveModal('${l.id}')">Mover</button>
             <button class="btn btn-sm btn-ghost btn-danger" onclick="deleteLead('${l.id}')">✕</button>
           </div>
@@ -1121,16 +1321,42 @@ function renderLeadsTable(){
 /* ════════════════════════════════
    MODAL: NEW LEAD
 ════════════════════════════════ */
-function openLeadModal(){
-  // Populate funnel select
+function openLeadModal(editId){
   const sel = document.getElementById('li-funnel');
   sel.innerHTML = funnels.map(f=>`<option value="${f.id}">${f.icon} ${f.name}</option>`).join('');
-  sel.value = activeFunnelId || funnels[0]?.id || '';
-  populateStageSelect();
-  document.getElementById('li-date').value = today();
-  document.getElementById('li-handle').value = '';
+
+  const titleEl = document.querySelector('#mo-lead .modal-hd h3');
+  const saveBtn = document.querySelector('#mo-lead .modal-ft .btn-primary');
+
+  if(editId){
+    const l = leads.find(x=>x.id===editId);
+    if(!l) return;
+    titleEl.textContent = 'Editar Lead';
+    saveBtn.onclick = ()=>updateLead(editId);
+    document.getElementById('li-name').value   = l.name  || '';
+    document.getElementById('li-handle').value = l.handle|| '';
+    document.getElementById('li-phone').value  = l.phone || '';
+    document.getElementById('li-email').value  = l.email || '';
+    document.getElementById('li-notes').value  = l.notes || '';
+    sel.value = l.funnelId || funnels[0]?.id || '';
+    populateStageSelect();
+    document.getElementById('li-stage').value  = l.stageId || '';
+    document.getElementById('li-origin').value = l.origin  || 'follower';
+    document.getElementById('li-date').value   = l.date    || today();
+  } else {
+    titleEl.textContent = 'Novo Lead';
+    saveBtn.onclick = saveLead;
+    sel.value = activeFunnelId || funnels[0]?.id || '';
+    populateStageSelect();
+    document.getElementById('li-date').value   = today();
+    document.getElementById('li-name').value   = '';
+    document.getElementById('li-handle').value = '';
+    document.getElementById('li-phone').value  = '';
+    document.getElementById('li-email').value  = '';
+    document.getElementById('li-notes').value  = '';
+  }
   openMo('mo-lead');
-  setTimeout(()=>document.getElementById('li-handle').focus(),150);
+  setTimeout(()=>document.getElementById('li-name').focus(),150);
 }
 
 function populateStageSelect(){
@@ -1143,16 +1369,72 @@ function populateStageSelect(){
 
 function saveLead(){
   const handle = document.getElementById('li-handle').value.trim();
-  if(!handle) return toast('Digite o @Instagram do lead');
+  const name   = document.getElementById('li-name').value.trim();
+  if(!handle && !name) return toast('Digite o nome ou @Instagram do lead');
   const funnelId = document.getElementById('li-funnel').value;
   const stageId  = document.getElementById('li-stage').value;
   const origin   = document.getElementById('li-origin').value;
   const date     = document.getElementById('li-date').value;
+  const phone    = document.getElementById('li-phone').value.trim();
+  const email    = document.getElementById('li-email').value.trim();
+  const notes    = document.getElementById('li-notes').value.trim();
   const f = getFunnel(funnelId);
   const isLast = f && f.stages[f.stages.length-1]?.id === stageId;
-  leads.push({id:uid(), handle, origin, funnelId, stageId, date, date_closed: isLast ? today() : null});
+  leads.push({id:uid(), handle: handle||name, name, phone, email, notes, origin, funnelId, stageId, date, date_closed: isLast ? today() : null});
   persist(); closeMo('mo-lead'); renderAll();
   toast('Lead adicionado!');
+}
+
+function updateLead(id){
+  const l = leads.find(x=>x.id===id);
+  if(!l) return;
+  const handle = document.getElementById('li-handle').value.trim();
+  const name   = document.getElementById('li-name').value.trim();
+  if(!handle && !name) return toast('Digite o nome ou @Instagram do lead');
+  l.name     = name;
+  l.handle   = handle || name;
+  l.phone    = document.getElementById('li-phone').value.trim();
+  l.email    = document.getElementById('li-email').value.trim();
+  l.notes    = document.getElementById('li-notes').value.trim();
+  l.funnelId = document.getElementById('li-funnel').value;
+  l.stageId  = document.getElementById('li-stage').value;
+  l.origin   = document.getElementById('li-origin').value;
+  l.date     = document.getElementById('li-date').value;
+  persist(); closeMo('mo-lead'); closeMo('mo-lead-detail'); renderAll();
+  toast('Lead atualizado!');
+}
+
+/* ════════════════════════════════
+   MODAL: DETALHES DO LEAD
+════════════════════════════════ */
+function openLeadDetail(leadId){
+  const l = leads.find(x=>x.id===leadId);
+  if(!l) return;
+  const f = getFunnel(l.funnelId);
+  const s = getStage(l.funnelId, l.stageId);
+  const avColor = avatarColor(l.handle);
+  const initials = (l.name || l.handle).replace('@','').slice(0,2).toUpperCase();
+
+  document.getElementById('ld-avatar').style.background = avColor;
+  document.getElementById('ld-avatar').textContent = initials;
+  document.getElementById('ld-name').textContent   = l.name || l.handle;
+  document.getElementById('ld-handle').textContent = l.handle !== l.name ? l.handle : '';
+
+  document.getElementById('ld-stage-badge').innerHTML = s
+    ? `<span class="badge" style="background:rgba(${hexToRgb(s.color)},.12);color:${s.color};"><span class="badge-dot" style="background:${s.color}"></span>${s.name}</span>`
+    : '';
+
+  document.getElementById('ld-phone').textContent  = l.phone  || '—';
+  document.getElementById('ld-email').textContent  = l.email  || '—';
+  document.getElementById('ld-funnel').textContent = f ? `${f.icon} ${f.name}` : '—';
+  document.getElementById('ld-origin-detail').textContent = ORIGIN_LABELS[l.origin] || l.origin || '—';
+  document.getElementById('ld-date-detail').textContent   = fmt(l.date);
+  document.getElementById('ld-notes-detail').textContent  = l.notes || 'Nenhuma observação.';
+
+  document.getElementById('ld-delete-btn').onclick = ()=>{ closeMo('mo-lead-detail'); deleteLead(leadId); };
+  document.getElementById('ld-edit-btn').onclick   = ()=>{ closeMo('mo-lead-detail'); openLeadModal(leadId); };
+
+  openMo('mo-lead-detail');
 }
 
 /* ════════════════════════════════
