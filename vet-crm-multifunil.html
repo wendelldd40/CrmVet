@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vet CRM — Multi-Funil</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg:#f0ede6;
+  --bg2:#e8e4db;
+  --surface:#ffffff;
+  --surface2:#faf8f4;
+  --border:#e2ddd5;
+  --border-light:#ede9e1;
+  --text:#1c1917;
+  --text2:#6b6560;
+  --text3:#a09892;
+  --ink:#1c1917;
+  --sidebar:#141210;
+  --r:14px;--r-sm:9px;--r-xs:5px;
+  --shadow:0 2px 12px rgba(28,25,23,.07);
+  --shadow-md:0 6px 28px rgba(28,25,23,.11);
+  --shadow-lg:0 16px 48px rgba(28,25,23,.16);
+  --sidebar-w:252px;
+  --header-h:0px;
+  --font-head:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+  --font-mono:'DM Mono',monospace;
+}
+
+body{font-family:var(--font-body);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased;min-height:100vh;font-size:14px;}
+
+/* ── LAYOUT ── */
+.app{display:flex;min-height:100vh;}
+aside{
+  width:var(--sidebar-w);background:var(--sidebar);
+  flex-shrink:0;display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;bottom:0;z-index:20;overflow:hidden;
+}
+aside::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 60% 0%,rgba(255,255,255,.04) 0%,transparent 60%),
+             radial-gradient(ellipse at 0% 100%,rgba(255,255,255,.02) 0%,transparent 50%);
+}
+main{flex:1;margin-left:var(--sidebar-w);overflow:auto;min-height:100vh;}
+
+/* ── SIDEBAR ── */
+.sb-logo{
+  padding:1.375rem 1.25rem 1.125rem;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;gap:11px;position:relative;z-index:1;
+}
+.sb-logo-mark{
+  width:36px;height:36px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,#2e7d5e,#1a5c47);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 3px 10px rgba(46,125,94,.4);
+}
+.sb-logo-mark svg{width:17px;height:17px;stroke:#fff;fill:none;stroke-width:2.2;}
+.sb-logo-text h1{font-family:var(--font-head);font-size:.9375rem;font-weight:700;color:#fff;letter-spacing:-.01em;}
+.sb-logo-text span{font-size:.625rem;font-family:var(--font-mono);color:rgba(255,255,255,.3);letter-spacing:.08em;}
+
+nav{padding:.875rem .75rem;flex:1;overflow-y:auto;position:relative;z-index:1;}
+.nav-sect{
+  font-size:.5625rem;font-weight:600;letter-spacing:.12em;
+  color:rgba(255,255,255,.2);padding:0 .75rem;
+  margin:.875rem 0 .375rem;text-transform:uppercase;
+}
+.nav-item{
+  display:flex;align-items:center;gap:.625rem;
+  padding:.5625rem .75rem;border-radius:7px;
+  margin-bottom:1px;cursor:pointer;
+  font-size:.8125rem;font-weight:500;color:rgba(255,255,255,.45);
+  transition:all .15s;border:none;background:none;width:100%;text-align:left;
+  position:relative;
+}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8);}
+.nav-item.active{background:rgba(255,255,255,.1);color:#fff;}
+.nav-item.active .nav-dot{
+  position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:60%;background:#2e7d5e;border-radius:0 2px 2px 0;
+}
+.nav-item svg{width:14px;height:14px;flex-shrink:0;}
+.nav-pill{
+  margin-left:auto;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);
+  padding:1px 7px;border-radius:99px;font-size:.5625rem;font-weight:700;
+  font-family:var(--font-mono);
+}
+
+/* Funil subitems */
+.nav-funnels{padding-left:0;}
+.nav-funnel-item{
+  display:flex;align-items:center;gap:8px;
+  padding:.4375rem .75rem .4375rem 2.125rem;
+  border-radius:6px;cursor:pointer;
+  font-size:.75rem;font-weight:500;color:rgba(255,255,255,.35);
+  transition:all .15s;border:none;background:none;width:100%;text-align:left;
+}
+.nav-funnel-item:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.65);}
+.nav-funnel-item.active{color:rgba(255,255,255,.9);}
+.nav-funnel-dot{width:7px;height:7px;border-radius:99px;flex-shrink:0;}
+
+.sb-footer{
+  padding:.875rem 1rem;border-top:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;gap:9px;position:relative;z-index:1;
+}
+.sb-avatar{
+  width:30px;height:30px;border-radius:99px;flex-shrink:0;
+  background:linear-gradient(135deg,#2e7d5e,#c4603a);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.6875rem;font-weight:700;color:#fff;
+}
+.sb-user p{font-size:.8125rem;font-weight:600;color:rgba(255,255,255,.8);}
+.sb-user span{font-size:.625rem;color:rgba(255,255,255,.3);font-family:var(--font-mono);}
+
+/* ── PAGES ── */
+.page{display:none;padding:2rem 2.5rem;animation:fadeUp .22s ease;}
+.page.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.pg-hd{margin-bottom:1.75rem;display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;}
+.pg-hd-l h2{font-family:var(--font-head);font-size:1.3125rem;font-weight:700;letter-spacing:-.025em;line-height:1.2;}
+.pg-hd-l p{font-size:.8125rem;color:var(--text2);margin-top:3px;}
+.pg-hd-r{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:.5rem .875rem;border-radius:var(--r-sm);
+  font-size:.8125rem;font-weight:600;cursor:pointer;
+  border:1px solid var(--border);background:var(--surface);
+  color:var(--text);font-family:var(--font-body);
+  transition:all .15s;line-height:1;white-space:nowrap;
+}
+.btn:hover{background:var(--bg);border-color:var(--text3);}
+.btn svg{width:13px;height:13px;}
+.btn-primary{background:var(--ink);color:#fff;border-color:var(--ink);box-shadow:0 2px 8px rgba(28,25,23,.2);}
+.btn-primary:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 4px 14px rgba(28,25,23,.25);}
+.btn-sm{padding:.3125rem .625rem;font-size:.75rem;}
+.btn-ghost{border:none;background:none;box-shadow:none;color:var(--text2);}
+.btn-ghost:hover{background:var(--bg);color:var(--text);}
+.btn-danger:hover{background:#fff1f2;border-color:#fca5a5;color:#e11d48;}
+.btn-icon{padding:.4375rem;border-radius:7px;}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;}
+.card-hd{padding:1.125rem 1.375rem .875rem;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;}
+.card-hd-title{font-family:var(--font-head);font-size:.875rem;font-weight:700;}
+.card-hd-sub{font-size:.6875rem;color:var(--text3);margin-top:2px;font-family:var(--font-mono);}
+.card-body{padding:1.125rem 1.375rem;}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:.875rem;margin-bottom:1.25rem;}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:1.125rem 1.25rem;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
+  transition:transform .2s,box-shadow .2s;
+}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.stat-stripe{position:absolute;top:0;left:0;right:0;height:2.5px;}
+.stat-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:.75rem;}
+.stat-icon svg{width:14px;height:14px;}
+.stat-val{font-family:var(--font-head);font-size:1.5625rem;font-weight:700;letter-spacing:-.03em;line-height:1;}
+.stat-lbl{font-size:.6875rem;color:var(--text2);margin-top:5px;font-weight:500;}
+
+/* ── DASHBOARD ── */
+.dash-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:.875rem;margin-bottom:.875rem;}
+.dash-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:.875rem;}
+
+.funnel-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.funnel-row:last-child{margin-bottom:0;}
+.funnel-row-label{width:80px;font-size:.75rem;font-weight:600;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.funnel-bar-track{flex:1;height:22px;background:var(--bg);border-radius:4px;position:relative;overflow:hidden;}
+.funnel-bar-fill{height:100%;border-radius:4px;transition:width .7s cubic-bezier(.23,1,.32,1);display:flex;align-items:center;justify-content:flex-end;padding-right:7px;}
+.funnel-bar-fill span{font-size:.625rem;font-weight:700;color:rgba(255,255,255,.9);font-family:var(--font-mono);}
+.funnel-row-n{width:22px;text-align:right;font-size:.6875rem;font-weight:700;font-family:var(--font-mono);color:var(--text3);}
+
+/* Funnel summary cards */
+.funnel-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:1.125rem 1.25rem;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;
+  cursor:pointer;transition:all .2s;
+}
+.funnel-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.funnel-card-accent{position:absolute;top:0;left:0;bottom:0;width:3px;}
+.funnel-card-name{font-family:var(--font-head);font-size:.875rem;font-weight:700;margin-bottom:4px;padding-left:12px;}
+.funnel-card-meta{font-size:.6875rem;color:var(--text3);padding-left:12px;font-family:var(--font-mono);}
+.funnel-card-stats{display:flex;gap:12px;margin-top:.75rem;padding-left:12px;}
+.funnel-card-stat{text-align:center;}
+.funnel-card-stat-val{font-family:var(--font-head);font-size:1.125rem;font-weight:700;line-height:1;}
+.funnel-card-stat-lbl{font-size:.5625rem;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;}
+.funnel-card-mini-bar{margin-top:.75rem;padding-left:12px;height:4px;background:var(--bg);border-radius:99px;overflow:hidden;}
+.funnel-card-mini-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.23,1,.32,1);}
+
+/* ── FUNNELS MANAGER ── */
+.funnels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;}
+.funnel-mgr-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;
+}
+.funnel-mgr-header{padding:1rem 1.125rem;display:flex;align-items:center;gap:10px;}
+.funnel-mgr-icon{
+  width:38px;height:38px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.125rem;flex-shrink:0;
+}
+.funnel-mgr-name{font-family:var(--font-head);font-size:.9375rem;font-weight:700;}
+.funnel-mgr-count{font-size:.6875rem;color:var(--text3);font-family:var(--font-mono);}
+.funnel-stages-list{padding:0 1.125rem 1rem;}
+.stage-chip-list{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:.875rem;}
+.stage-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:99px;
+  font-size:.625rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+}
+.stage-pill-dot{width:6px;height:6px;border-radius:99px;}
+.funnel-mgr-actions{
+  padding:.75rem 1.125rem;background:var(--surface2);
+  border-top:1px solid var(--border-light);
+  display:flex;gap:6px;align-items:center;
+}
+
+/* ── KANBAN ── */
+.kb-toolbar{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:1.25rem;background:var(--surface);
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:.5rem .75rem;box-shadow:var(--shadow);
+}
+.kb-toolbar-label{font-size:.6875rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-right:4px;}
+.kb-funnel-tabs{display:flex;gap:4px;flex:1;flex-wrap:wrap;}
+.kb-tab{
+  padding:.3125rem .75rem;border-radius:5px;font-size:.75rem;font-weight:600;
+  cursor:pointer;border:1px solid transparent;
+  background:none;color:var(--text2);font-family:var(--font-body);
+  transition:all .15s;display:flex;align-items:center;gap:6px;
+}
+.kb-tab:hover{background:var(--bg);color:var(--text);}
+.kb-tab.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.kb-tab-dot{width:7px;height:7px;border-radius:99px;flex-shrink:0;}
+
+.kb-board{display:flex;gap:.875rem;align-items:flex-start;overflow-x:auto;padding-bottom:.5rem;}
+.kb-col{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);padding:.875rem;min-width:230px;max-width:260px;
+  flex-shrink:0;
+}
+.kb-col-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.875rem;}
+.kb-col-title{font-size:.6875rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);}
+.kb-col-badge{
+  font-size:.5625rem;font-weight:700;padding:2px 7px;border-radius:99px;
+  background:var(--border);color:var(--text3);font-family:var(--font-mono);
+}
+.kb-col-stripe{height:2px;border-radius:99px;margin-bottom:.875rem;}
+
+.kb-card{
+  background:var(--surface);border-radius:var(--r-sm);padding:.875rem;
+  margin-bottom:.625rem;box-shadow:var(--shadow);border:1px solid var(--border);
+  transition:transform .15s,box-shadow .15s;cursor:default;
+}
+.kb-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-md);}
+.kb-card h4{font-size:.875rem;font-weight:600;margin-bottom:3px;}
+.kb-card-date{font-size:.625rem;font-family:var(--font-mono);color:var(--text3);}
+.kb-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+
+/* ── LEADS TABLE ── */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow);}
+.table-toolbar{padding:.75rem 1.125rem;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;}
+table{width:100%;border-collapse:collapse;font-size:.8125rem;}
+th{background:var(--surface2);padding:.6875rem 1.125rem;text-align:left;color:var(--text3);font-weight:600;font-size:.625rem;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);}
+td{padding:.8125rem 1.125rem;border-bottom:1px solid var(--border-light);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--surface2);}
+.td-handle{display:flex;align-items:center;gap:9px;}
+.td-avatar{width:30px;height:30px;border-radius:99px;display:flex;align-items:center;justify-content:center;font-size:.625rem;font-weight:700;color:#fff;flex-shrink:0;font-family:var(--font-mono);}
+
+/* ── TAGS / BADGES ── */
+.tag{display:inline-flex;align-items:center;gap:4px;font-size:.5625rem;font-weight:700;padding:2px 7px;border-radius:4px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:.6875rem;font-weight:600;white-space:nowrap;}
+.badge-dot{width:6px;height:6px;border-radius:99px;}
+
+/* ── SEARCH ── */
+.search-wrap{position:relative;}
+.search-wrap svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:13px;height:13px;stroke:var(--text3);fill:none;pointer-events:none;}
+.search-wrap input{padding-left:29px;width:200px;font-size:.8125rem;}
+input,select,textarea{
+  width:100%;padding:.5625rem .75rem;
+  border:1px solid var(--border);border-radius:var(--r-sm);
+  font-family:var(--font-body);font-size:.875rem;
+  color:var(--text);background:var(--surface);
+  transition:border-color .15s,box-shadow .15s;outline:none;-webkit-appearance:none;
+}
+input:focus,select:focus{border-color:#2e7d5e;box-shadow:0 0 0 3px rgba(46,125,94,.12);}
+
+/* ── MODAL ── */
+.mo{display:none;position:fixed;inset:0;background:rgba(20,18,16,.55);z-index:100;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.mo.open{display:flex;}
+.modal{
+  background:var(--surface);border-radius:var(--r);
+  width:100%;max-width:440px;
+  box-shadow:var(--shadow-lg);border:1px solid var(--border);
+  animation:modalIn .2s ease;overflow:hidden;
+}
+.modal-lg{max-width:580px;}
+@keyframes modalIn{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-hd{padding:1.25rem 1.5rem .875rem;border-bottom:1px solid var(--border-light);}
+.modal-hd h3{font-family:var(--font-head);font-size:1rem;font-weight:700;}
+.modal-hd p{font-size:.75rem;color:var(--text2);margin-top:3px;}
+.modal-body{padding:1.125rem 1.5rem;}
+.modal-ft{padding:.75rem 1.5rem;background:var(--surface2);border-top:1px solid var(--border-light);display:flex;justify-content:flex-end;gap:7px;}
+
+.field{margin-bottom:.875rem;}
+.field label{display:block;font-size:.625rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-bottom:5px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+
+/* ── STAGE EDITOR ── */
+.stage-editor-list{display:flex;flex-direction:column;gap:6px;margin-top:.75rem;}
+.stage-editor-item{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:.5rem .75rem;
+}
+.stage-editor-color{width:26px;height:26px;border-radius:6px;border:none;cursor:pointer;flex-shrink:0;}
+.stage-editor-input{flex:1;padding:.375rem .625rem;font-size:.8125rem;}
+.stage-editor-drag{color:var(--text3);cursor:grab;font-size:.875rem;}
+.stage-add-btn{
+  display:flex;align-items:center;gap:6px;
+  padding:.5rem .75rem;border-radius:var(--r-sm);
+  border:1.5px dashed var(--border);background:none;
+  color:var(--text3);font-size:.8125rem;font-weight:500;cursor:pointer;
+  font-family:var(--font-body);width:100%;margin-top:6px;
+  transition:all .15s;
+}
+.stage-add-btn:hover{border-color:var(--text3);color:var(--text);}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:3rem 1.5rem;color:var(--text3);}
+.empty svg{width:36px;height:36px;stroke:var(--text3);fill:none;margin-bottom:.875rem;opacity:.4;}
+.empty p{font-size:.875rem;}
+.empty small{font-size:.75rem;margin-top:4px;display:block;}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:2rem;right:2rem;
+  background:var(--ink);color:#fff;
+  padding:.6875rem 1.125rem;border-radius:var(--r-sm);
+  font-size:.8125rem;font-weight:500;
+  opacity:0;transition:all .3s;pointer-events:none;z-index:1000;
+  box-shadow:0 8px 24px rgba(28,25,23,.25);
+  display:flex;align-items:center;gap:7px;transform:translateY(8px);
+}
+#toast.show{opacity:1;transform:translateY(0);}
+
+/* ── COLOR SWATCHES ── */
+.color-swatches{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+.color-swatch{width:24px;height:24px;border-radius:6px;cursor:pointer;border:2.5px solid transparent;transition:transform .1s;flex-shrink:0;}
+.color-swatch:hover{transform:scale(1.15);}
+.color-swatch.selected{border-color:var(--ink);}
+
+/* ── MISC ── */
+.divider{height:1px;background:var(--border-light);margin:.875rem 0;}
+.section-title{font-family:var(--font-head);font-size:.875rem;font-weight:700;margin-bottom:.875rem;}
+.new-funnel-card{
+  background:none;border:1.5px dashed var(--border);
+  border-radius:var(--r);padding:2rem;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;cursor:pointer;transition:all .2s;min-height:200px;
+  font-family:var(--font-body);
+}
+.new-funnel-card:hover{border-color:var(--text3);background:var(--surface);}
+.new-funnel-card svg{width:28px;height:28px;stroke:var(--text3);fill:none;margin-bottom:.75rem;opacity:.5;}
+.new-funnel-card p{font-size:.875rem;font-weight:600;color:var(--text3);}
+.new-funnel-card small{font-size:.75rem;color:var(--text3);opacity:.7;margin-top:3px;}
+
+select option{font-family:var(--font-body);}
+
+@media(max-width:1100px){.stats-row{grid-template-columns:repeat(2,1fr);}
+.dash-grid{grid-template-columns:1fr;}
+.dash-grid-3{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:768px){
+  aside{width:54px;}
+  .sb-logo-text,.nav-item span,.nav-pill,.nav-sect,.nav-funnel-item,.sb-user{display:none;}
+  main{margin-left:54px;}
+  .page{padding:1.25rem;}
+  .stats-row{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="sb-logo">
+    <div class="sb-logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </div>
+    <div class="sb-logo-text"><h1>Vet CRM</h1><span>MULTI-FUNIL</span></div>
+  </div>
+
+  <nav>
+    <div class="nav-sect">Principal</div>
+    <button class="nav-item active" onclick="showPage('dashboard',this)">
+      <span class="nav-dot"></span>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.9"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      <span>Dashboard</span>
+    </button>
+
+    <div class="nav-sect">Funis</div>
+    <button class="nav-item" onclick="showPage('funnels',this)">
+      <span class="nav-dot"></span>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.9"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      <span>Gerenciar Funis</span>
+    </button>
+    <button class="nav-item" onclick="showPage('kanban',this)" id="nav-kanban">
+      <span class="nav-dot"></span>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.9"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+      <span>Kanban</span>
+    </button>
+
+    <div class="nav-sect">Dados</div>
+    <button class="nav-item" onclick="showPage('leads',this)">
+      <span class="nav-dot"></span>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.9"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/><path d="M16 3.13a4 4 0 010 7.75"/><path d="M21 21v-2a4 4 0 00-3-3.87"/></svg>
+      <span>Todos os Leads</span>
+      <span class="nav-pill" id="pill-leads">0</span>
+    </button>
+  </nav>
+
+  <div class="sb-footer">
+    <div class="sb-avatar">V</div>
+    <div class="sb-user">
+      <p>Vet Consultoria</p>
+      <span>@vet_negocio</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+  <!-- ═══════════════ DASHBOARD ═══════════════ -->
+  <div id="page-dashboard" class="page active">
+    <div class="pg-hd">
+      <div class="pg-hd-l">
+        <h2>Dashboard Central</h2>
+        <p>Visão consolidada de todos os funis</p>
+      </div>
+      <div class="pg-hd-r">
+        <span style="font-size:.6875rem;font-family:var(--font-mono);color:var(--text3);" id="dash-date"></span>
+        <button class="btn btn-primary" onclick="openLeadModal()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo Lead
+        </button>
+      </div>
+    </div>
+
+    <!-- GLOBAL STATS -->
+    <div class="stats-row" id="global-stats"></div>
+
+    <!-- FUNNEL BREAKDOWN + ACTIVITY -->
+    <div class="dash-grid" style="margin-bottom:.875rem;">
+      <div class="card">
+        <div class="card-hd">
+          <div><div class="card-hd-title">Conversão por Funil</div><div class="card-hd-sub">Taxa de fechamento comparativa</div></div>
+        </div>
+        <div class="card-body" id="funnel-compare"></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div><div class="card-hd-title">Atividade Recente</div><div class="card-hd-sub">Últimos leads</div></div></div>
+        <div class="card-body" id="recent-act" style="padding:0 1.375rem;"></div>
+      </div>
+    </div>
+
+    <!-- PER-FUNNEL CARDS -->
+    <div class="section-title">Resumo por Funil</div>
+    <div id="funnel-summary-cards" class="dash-grid-3"></div>
+  </div>
+
+  <!-- ═══════════════ GERENCIAR FUNIS ═══════════════ -->
+  <div id="page-funnels" class="page">
+    <div class="pg-hd">
+      <div class="pg-hd-l">
+        <h2>Gerenciar Funis</h2>
+        <p>Crie subfunis com etapas personalizadas por produto ou serviço</p>
+      </div>
+      <div class="pg-hd-r">
+        <button class="btn btn-primary" onclick="openFunnelModal()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo Funil
+        </button>
+      </div>
+    </div>
+    <div class="funnels-grid" id="funnels-grid"></div>
+  </div>
+
+  <!-- ═══════════════ KANBAN ═══════════════ -->
+  <div id="page-kanban" class="page">
+    <div class="pg-hd">
+      <div class="pg-hd-l">
+        <h2>Kanban</h2>
+        <p id="kb-subtitle">Selecione um funil para ver o pipeline</p>
+      </div>
+      <div class="pg-hd-r">
+        <button class="btn" onclick="openStageModal()" id="btn-edit-stages" style="display:none;">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Editar Etapas
+        </button>
+        <button class="btn btn-primary" onclick="openLeadModal()" id="btn-add-lead-kb">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo Lead
+        </button>
+      </div>
+    </div>
+
+    <!-- Funnel selector tabs -->
+    <div class="kb-toolbar">
+      <span class="kb-toolbar-label">Funil:</span>
+      <div class="kb-funnel-tabs" id="kb-tabs"></div>
+    </div>
+
+    <!-- Kanban board -->
+    <div class="kb-board" id="kb-board"></div>
+  </div>
+
+  <!-- ═══════════════ LEADS ═══════════════ -->
+  <div id="page-leads" class="page">
+    <div class="pg-hd">
+      <div class="pg-hd-l"><h2>Todos os Leads</h2><p>Base completa de contatos</p></div>
+      <div class="pg-hd-r">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="leads-search" placeholder="Buscar @..." oninput="renderLeadsTable()">
+        </div>
+        <select id="leads-filter-funnel" onchange="renderLeadsTable()" style="width:auto;padding:.4375rem .625rem;font-size:.75rem;">
+          <option value="">Todos os Funis</option>
+        </select>
+        <button class="btn btn-primary" onclick="openLeadModal()">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Adicionar Lead
+        </button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Perfil</th><th>Funil</th><th>Etapa</th><th>Origem</th><th>Data</th><th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="leads-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- ═══════ MODAL: NOVO LEAD ═══════ -->
+<div class="mo" id="mo-lead">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Novo Lead</h3>
+      <p>Adicione um contato ao funil de vendas</p>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>@ Instagram</label><input type="text" id="li-handle" placeholder="@cliente"></div>
+      <div class="field-row">
+        <div class="field">
+          <label>Funil</label>
+          <select id="li-funnel" onchange="populateStageSelect()"></select>
+        </div>
+        <div class="field">
+          <label>Etapa</label>
+          <select id="li-stage"></select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Origem</label>
+          <select id="li-origin">
+            <option value="follower">🔔 Seguidor</option>
+            <option value="comment">💬 Comentário</option>
+            <option value="dm">📩 DM Direto</option>
+            <option value="indicacao">🤝 Indicação</option>
+            <option value="anuncio">📢 Anúncio</option>
+          </select>
+        </div>
+        <div class="field"><label>Data</label><input type="date" id="li-date"></div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeMo('mo-lead')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveLead()">Salvar Lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL: NOVO FUNIL ═══════ -->
+<div class="mo" id="mo-funnel">
+  <div class="modal modal-lg">
+    <div class="modal-hd">
+      <h3 id="mf-title">Novo Funil</h3>
+      <p>Configure as etapas do seu subfunil de vendas</p>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field" style="flex:2">
+          <label>Nome do Funil</label>
+          <input type="text" id="mf-name" placeholder="ex: Consultoria Premium">
+        </div>
+        <div class="field" style="flex:1">
+          <label>Emoji / Ícone</label>
+          <input type="text" id="mf-icon" placeholder="🏥" maxlength="4" style="font-size:1.25rem;text-align:center;">
+        </div>
+      </div>
+      <div class="field">
+        <label>Cor do Funil</label>
+        <div class="color-swatches" id="mf-swatches"></div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;">
+        <div class="field" style="margin:0;"><label style="margin:0;">Etapas do Funil</label></div>
+        <span style="font-size:.6875rem;color:var(--text3);">Arraste para reordenar</span>
+      </div>
+      <div class="stage-editor-list" id="mf-stages"></div>
+      <button class="stage-add-btn" onclick="addStageRow()">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="width:13px;height:13px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Adicionar Etapa
+      </button>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeMo('mo-funnel')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFunnel()">Salvar Funil</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL: EDITAR ETAPAS (quick) ═══════ -->
+<div class="mo" id="mo-stages">
+  <div class="modal modal-lg">
+    <div class="modal-hd">
+      <h3 id="ms-title">Editar Etapas</h3>
+      <p>Adicione, renomeie ou remova etapas deste funil</p>
+    </div>
+    <div class="modal-body">
+      <div class="stage-editor-list" id="ms-stages"></div>
+      <button class="stage-add-btn" onclick="addStageRowToModal('ms-stages')">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="width:13px;height:13px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Adicionar Etapa
+      </button>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeMo('mo-stages')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveStages()">Salvar Etapas</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL: MOVER LEAD ═══════ -->
+<div class="mo" id="mo-move">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3>Mover Lead</h3>
+      <p id="mm-sub">Altere a etapa ou funil do lead</p>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Funil</label>
+        <select id="mm-funnel" onchange="populateMoveStage()"></select>
+      </div>
+      <div class="field">
+        <label>Etapa</label>
+        <select id="mm-stage"></select>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" onclick="closeMo('mo-move')">Cancelar</button>
+      <button class="btn btn-primary" onclick="moveLead()">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" style="width:13px;height:13px;flex-shrink:0"><polyline points="20 6 9 17 4 12"/></svg><span id="toast-msg"></span></div>
+
+<script>
+/* ════════════════════════════════
+   DATA MODEL
+════════════════════════════════ */
+const SK = 'vet-crm-v3';
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const today = () => new Date().toISOString().split('T')[0];
+const fmt = d => d ? d.split('-').reverse().join('/') : '—';
+
+const PALETTE = [
+  '#2e7d5e','#2563eb','#7c3aed','#c4603a','#d97706',
+  '#059669','#e11d48','#0891b2','#7e22ce','#4f46e5',
+  '#b45309','#0f766e','#be123c','#1d4ed8','#15803d'
+];
+
+const ORIGIN_LABELS = {follower:'Seguidor',comment:'Comentário',dm:'DM Direto',indicacao:'Indicação',anuncio:'Anúncio'};
+
+// DEFAULT FUNNELS
+const defaultFunnels = [
+  {
+    id:'f1', name:'Consultoria Vet', icon:'🏥', color:'#2e7d5e',
+    stages:[
+      {id:'s1',name:'Novo Lead',color:'#2563eb'},
+      {id:'s2',name:'Primeiro Contato',color:'#7c3aed'},
+      {id:'s3',name:'Reunião',color:'#d97706'},
+      {id:'s4',name:'Proposta',color:'#ea580c'},
+      {id:'s5',name:'Fechado',color:'#2e7d5e'},
+    ]
+  },
+  {
+    id:'f2', name:'Plano Mensal', icon:'📦', color:'#2563eb',
+    stages:[
+      {id:'s6',name:'Interesse',color:'#0891b2'},
+      {id:'s7',name:'Trial',color:'#7e22ce'},
+      {id:'s8',name:'Convertido',color:'#059669'},
+    ]
+  },
+  {
+    id:'f3', name:'Mentoria VIP', icon:'⭐', color:'#d97706',
+    stages:[
+      {id:'s9',name:'Qualificação',color:'#d97706'},
+      {id:'sa',name:'Apresentação',color:'#c4603a'},
+      {id:'sb',name:'Negociação',color:'#7c3aed'},
+      {id:'sc',name:'Ganho',color:'#059669'},
+    ]
+  }
+];
+
+const defaultLeads = [
+  {id:uid(),handle:'@vet_maria',origin:'follower',funnelId:'f1',stageId:'s5',date:'2026-03-01',date_closed:'2026-03-10'},
+  {id:uid(),handle:'@pet_shop_luna',origin:'comment',funnelId:'f1',stageId:'s3',date:'2026-03-15'},
+  {id:uid(),handle:'@clinica_vida',origin:'follower',funnelId:'f1',stageId:'s4',date:'2026-03-20'},
+  {id:uid(),handle:'@dr_carlos',origin:'dm',funnelId:'f1',stageId:'s1',date:'2026-03-22'},
+  {id:uid(),handle:'@animale_sp',origin:'indicacao',funnelId:'f2',stageId:'s8',date:'2026-02-15',date_closed:'2026-03-05'},
+  {id:uid(),handle:'@vet_express',origin:'anuncio',funnelId:'f2',stageId:'s7',date:'2026-03-18'},
+  {id:uid(),handle:'@dra_paula',origin:'indicacao',funnelId:'f3',stageId:'sc',date:'2026-02-20',date_closed:'2026-03-01'},
+  {id:uid(),handle:'@bio_pet',origin:'follower',funnelId:'f3',stageId:'sb',date:'2026-03-25'},
+];
+
+let stored = JSON.parse(localStorage.getItem(SK) || 'null');
+let funnels = stored ? stored.funnels : JSON.parse(JSON.stringify(defaultFunnels));
+let leads   = stored ? stored.leads   : JSON.parse(JSON.stringify(defaultLeads));
+
+const persist = () => localStorage.setItem(SK, JSON.stringify({funnels, leads}));
+
+// State
+let activeFunnelId = funnels[0]?.id || null;
+let editingFunnelId = null;
+let movingLeadId = null;
+let mfColor = funnels[0]?.color || PALETTE[0];
+let tempStages = []; // stages being edited in modal
+
+/* ════════════════════════════════
+   HELPERS
+════════════════════════════════ */
+function getFunnel(id){ return funnels.find(f=>f.id===id); }
+function getStage(funnelId, stageId){
+  const f = getFunnel(funnelId);
+  return f ? f.stages.find(s=>s.id===stageId) : null;
+}
+function leadsFor(funnelId){ return leads.filter(l=>l.funnelId===funnelId); }
+function closedLeads(funnelId){
+  const f = getFunnel(funnelId);
+  if (!f) return [];
+  // "closed" = last stage
+  const lastStage = f.stages[f.stages.length-1];
+  return leads.filter(l=>l.funnelId===funnelId && l.stageId===lastStage?.id);
+}
+function convRate(funnelId){
+  const total = leadsFor(funnelId).length;
+  const closed = closedLeads(funnelId).length;
+  return total > 0 ? Math.round(closed/total*100) : 0;
+}
+function hexToRgb(hex){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+function avatarColor(handle, alpha=1){
+  const colors = ['#2e7d5e','#2563eb','#7c3aed','#c4603a','#d97706','#0891b2','#059669'];
+  const i = handle.charCodeAt(1) % colors.length;
+  return colors[i];
+}
+
+/* ════════════════════════════════
+   NAVIGATION
+════════════════════════════════ */
+function showPage(p, btn){
+  document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(btn) btn.classList.add('active');
+  renderPage(p);
+}
+
+function renderPage(p){
+  if(p==='dashboard') renderDashboard();
+  if(p==='funnels')   renderFunnelsManager();
+  if(p==='kanban')    renderKanban();
+  if(p==='leads')     renderLeadsTable();
+  updatePills();
+}
+
+function renderAll(){
+  const active = document.querySelector('.page.active');
+  if(!active) return;
+  const id = active.id.replace('page-','');
+  renderPage(id);
+}
+
+function updatePills(){
+  document.getElementById('pill-leads').textContent = leads.length;
+}
+
+/* ════════════════════════════════
+   DASHBOARD
+════════════════════════════════ */
+function renderDashboard(){
+  // Date
+  document.getElementById('dash-date').textContent =
+    new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+  // Global stats
+  const totalLeads  = leads.length;
+  const totalClosed = funnels.reduce((a,f)=>a+closedLeads(f.id).length,0);
+  const totalFunnels = funnels.length;
+  const globalRate = totalLeads>0 ? Math.round(totalClosed/totalLeads*100) : 0;
+  let cicloTotal = 0, cicloCount = 0;
+  leads.forEach(l=>{
+    if(l.date_closed){
+      cicloTotal += (new Date(l.date_closed)-new Date(l.date))/86400000;
+      cicloCount++;
+    }
+  });
+  const cicloMedio = cicloCount > 0 ? Math.round(cicloTotal/cicloCount) : 0;
+
+  const stats = [
+    {lbl:'Total de Leads',val:totalLeads,color:'#2563eb',icon:'<circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 014-4h4a4 4 0 014 4v2"/>'},
+    {lbl:'Clientes Fechados',val:totalClosed,color:'#2e7d5e',icon:'<polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>'},
+    {lbl:'Taxa Global',val:globalRate+'%',color:'#d97706',icon:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'},
+    {lbl:'Funis Ativos',val:totalFunnels,color:'#7c3aed',icon:'<polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>'},
+  ];
+
+  document.getElementById('global-stats').innerHTML = stats.map(s=>`
+    <div class="stat-card">
+      <div class="stat-stripe" style="background:${s.color}"></div>
+      <div class="stat-icon" style="background:rgba(${hexToRgb(s.color)},.1)">
+        <svg fill="none" stroke="${s.color}" viewBox="0 0 24 24" stroke-width="2">${s.icon}</svg>
+      </div>
+      <div class="stat-val">${s.val}</div>
+      <div class="stat-lbl">${s.lbl}</div>
+    </div>
+  `).join('');
+
+  // Funnel compare
+  document.getElementById('funnel-compare').innerHTML = funnels.length===0
+    ? '<div class="empty"><p>Nenhum funil criado</p></div>'
+    : funnels.map(f=>{
+        const total = leadsFor(f.id).length;
+        const rate  = convRate(f.id);
+        return `
+          <div class="funnel-row">
+            <span class="funnel-row-label" title="${f.name}">${f.icon} ${f.name}</span>
+            <div class="funnel-bar-track">
+              <div class="funnel-bar-fill" style="width:${Math.max(rate,total>0?8:0)}%;background:${f.color};">
+                ${rate>12 ? `<span>${rate}%</span>` : ''}
+              </div>
+            </div>
+            <span class="funnel-row-n">${total}</span>
+          </div>
+        `;
+      }).join('');
+
+  // Recent activity
+  const recent = [...leads].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+  document.getElementById('recent-act').innerHTML = recent.length===0
+    ? '<div class="empty" style="padding:1.5rem"><p>Nenhum lead</p></div>'
+    : recent.map(l=>{
+        const f = getFunnel(l.funnelId);
+        const s = getStage(l.funnelId, l.stageId);
+        return `
+          <div style="display:flex;align-items:center;gap:10px;padding:.75rem 0;border-bottom:1px solid var(--border-light);">
+            <div style="width:7px;height:7px;border-radius:99px;background:${f?.color||'#888'};flex-shrink:0;"></div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:.8125rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${l.handle}</div>
+              <div style="font-size:.6875rem;color:var(--text3);">${f?.icon||''} ${f?.name||''} · ${s?.name||''}</div>
+            </div>
+            <span style="font-size:.625rem;font-family:var(--font-mono);color:var(--text3);flex-shrink:0;">${fmt(l.date)}</span>
+          </div>
+        `;
+      }).join('');
+
+  // Per-funnel summary cards
+  document.getElementById('funnel-summary-cards').innerHTML = funnels.map(f=>{
+    const total  = leadsFor(f.id).length;
+    const closed = closedLeads(f.id).length;
+    const rate   = convRate(f.id);
+    const active = total - closed;
+    return `
+      <div class="funnel-card" onclick="goToFunnelKanban('${f.id}')">
+        <div class="funnel-card-accent" style="background:${f.color}"></div>
+        <div class="funnel-card-name">${f.icon} ${f.name}</div>
+        <div class="funnel-card-meta">${f.stages.length} etapas · ${rate}% conversão</div>
+        <div class="funnel-card-stats">
+          <div class="funnel-card-stat">
+            <div class="funnel-card-stat-val">${total}</div>
+            <div class="funnel-card-stat-lbl">Leads</div>
+          </div>
+          <div class="funnel-card-stat">
+            <div class="funnel-card-stat-val" style="color:${f.color}">${closed}</div>
+            <div class="funnel-card-stat-lbl">Fechados</div>
+          </div>
+          <div class="funnel-card-stat">
+            <div class="funnel-card-stat-val">${active}</div>
+            <div class="funnel-card-stat-lbl">Ativos</div>
+          </div>
+        </div>
+        <div class="funnel-card-mini-bar">
+          <div class="funnel-card-mini-fill" style="width:${rate}%;background:${f.color};"></div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function goToFunnelKanban(funnelId){
+  activeFunnelId = funnelId;
+  const navBtn = document.getElementById('nav-kanban');
+  showPage('kanban', navBtn);
+  navBtn.classList.add('active');
+  document.querySelector('.nav-item.active:not(#nav-kanban)')?.classList.remove('active');
+}
+
+/* ════════════════════════════════
+   FUNNELS MANAGER
+════════════════════════════════ */
+function renderFunnelsManager(){
+  const grid = document.getElementById('funnels-grid');
+  grid.innerHTML = funnels.map(f=>{
+    const total  = leadsFor(f.id).length;
+    const closed = closedLeads(f.id).length;
+    return `
+      <div class="funnel-mgr-card">
+        <div class="funnel-mgr-header" style="background:rgba(${hexToRgb(f.color)},.06);border-bottom:1px solid var(--border-light);">
+          <div class="funnel-mgr-icon" style="background:rgba(${hexToRgb(f.color)},.15);">${f.icon}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="funnel-mgr-name">${f.name}</div>
+            <div class="funnel-mgr-count">${total} leads · ${closed} fechados</div>
+          </div>
+          <div style="width:10px;height:10px;border-radius:99px;background:${f.color};flex-shrink:0;"></div>
+        </div>
+        <div class="funnel-stages-list">
+          <div style="margin-top:.875rem;margin-bottom:.5rem;">
+            <div style="font-size:.5625rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);margin-bottom:6px;">Etapas (${f.stages.length})</div>
+            <div class="stage-chip-list">
+              ${f.stages.map((s,i)=>`
+                <span class="stage-pill" style="background:rgba(${hexToRgb(s.color)},.12);color:${s.color};">
+                  <span class="stage-pill-dot" style="background:${s.color};"></span>
+                  ${i+1}. ${s.name}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+        <div class="funnel-mgr-actions">
+          <button class="btn btn-sm" onclick="editFunnelModal('${f.id}')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Editar
+          </button>
+          <button class="btn btn-sm" onclick="goToFunnelKanban('${f.id}')">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/></svg>
+            Kanban
+          </button>
+          <button class="btn btn-sm btn-ghost btn-danger" onclick="deleteFunnel('${f.id}')" style="margin-left:auto;">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('') + `
+    <button class="new-funnel-card" onclick="openFunnelModal()">
+      <svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/><line x1="12" y1="10" x2="12" y2="16"/><line x1="9" y1="13" x2="15" y2="13"/></svg>
+      <p>Criar Novo Funil</p>
+      <small>Configure etapas personalizadas</small>
+    </button>
+  `;
+}
+
+/* ════════════════════════════════
+   KANBAN
+════════════════════════════════ */
+function renderKanban(){
+  // Build tabs
+  document.getElementById('kb-tabs').innerHTML = funnels.map(f=>`
+    <button class="kb-tab ${f.id===activeFunnelId?'active':''}" onclick="setActiveKbFunnel('${f.id}')">
+      <span class="kb-tab-dot" style="background:${f.id===activeFunnelId?f.color:f.color+'60'}"></span>
+      ${f.icon} ${f.name}
+    </button>
+  `).join('') + `
+    <button class="btn btn-sm btn-ghost" onclick="openFunnelModal()" style="margin-left:auto;">+ Novo Funil</button>
+  `;
+
+  const f = getFunnel(activeFunnelId);
+  if(!f){ document.getElementById('kb-board').innerHTML = '<div class="empty" style="width:100%;text-align:center;padding:4rem;"><p>Selecione ou crie um funil para começar</p></div>'; return; }
+
+  document.getElementById('kb-subtitle').textContent = `${f.icon} ${f.name} · ${f.stages.length} etapas`;
+  document.getElementById('btn-edit-stages').style.display = 'inline-flex';
+
+  const fLeads = leadsFor(activeFunnelId);
+
+  document.getElementById('kb-board').innerHTML = f.stages.map(stage=>{
+    const stageLeads = fLeads.filter(l=>l.stageId===stage.id);
+    const cards = stageLeads.length===0
+      ? `<div class="empty" style="padding:1.5rem .5rem;"><svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:var(--text3);fill:none;margin-bottom:.5rem;opacity:.35"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p style="font-size:.75rem;">Vazio</p></div>`
+      : stageLeads.map(l=>{
+          const orig = ORIGIN_LABELS[l.origin] || l.origin;
+          const isLast = f.stages[f.stages.length-1].id === stage.id;
+          return `
+            <div class="kb-card">
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">
+                <div style="width:24px;height:24px;border-radius:99px;background:${avatarColor(l.handle)};display:flex;align-items:center;justify-content:center;font-size:.5625rem;font-weight:700;color:#fff;font-family:var(--font-mono);flex-shrink:0;">${l.handle.replace('@','').slice(0,2).toUpperCase()}</div>
+                <h4 style="font-size:.8125rem;">${l.handle}</h4>
+              </div>
+              <div class="kb-card-date">${fmt(l.date)}</div>
+              <div class="kb-card-footer">
+                <span class="tag" style="background:rgba(${hexToRgb(avatarColor(l.handle))},.1);color:${avatarColor(l.handle)}">${orig}</span>
+                ${isLast
+                  ? `<span style="font-size:.625rem;color:var(--text3);">✅ Fechado</span>`
+                  : `<button class="btn btn-sm btn-ghost" onclick="openMoveModal('${l.id}')" style="padding:2px 7px;font-size:.6875rem;">Mover →</button>`
+                }
+              </div>
+            </div>
+          `;
+        }).join('');
+
+    return `
+      <div class="kb-col">
+        <div class="kb-col-hd">
+          <span class="kb-col-title">${stage.name}</span>
+          <span class="kb-col-badge">${stageLeads.length}</span>
+        </div>
+        <div class="kb-col-stripe" style="background:${stage.color}"></div>
+        ${cards}
+      </div>
+    `;
+  }).join('');
+}
+
+function setActiveKbFunnel(id){
+  activeFunnelId = id;
+  renderKanban();
+}
+
+/* ════════════════════════════════
+   LEADS TABLE
+════════════════════════════════ */
+function renderLeadsTable(){
+  // Populate funnel filter
+  const fsel = document.getElementById('leads-filter-funnel');
+  const curVal = fsel.value;
+  fsel.innerHTML = '<option value="">Todos os Funis</option>' +
+    funnels.map(f=>`<option value="${f.id}" ${curVal===f.id?'selected':''}>${f.icon} ${f.name}</option>`).join('');
+
+  const q = (document.getElementById('leads-search')?.value||'').toLowerCase();
+  const fFilter = fsel.value;
+  let filtered = leads.filter(l=>{
+    const matchQ = !q || l.handle.toLowerCase().includes(q);
+    const matchF = !fFilter || l.funnelId===fFilter;
+    return matchQ && matchF;
+  });
+
+  const tbody = document.getElementById('leads-tbody');
+  if(filtered.length===0){
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2.5rem;color:var(--text3);">Nenhum lead encontrado</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(l=>{
+    const f = getFunnel(l.funnelId);
+    const s = getStage(l.funnelId, l.stageId);
+    const initials = l.handle.replace('@','').slice(0,2).toUpperCase();
+    const avColor = avatarColor(l.handle);
+    return `
+      <tr>
+        <td>
+          <div class="td-handle">
+            <div class="td-avatar" style="background:${avColor};">${initials}</div>
+            <strong>${l.handle}</strong>
+          </div>
+        </td>
+        <td>
+          ${f ? `<span class="tag" style="background:rgba(${hexToRgb(f.color)},.1);color:${f.color};">${f.icon} ${f.name}</span>` : '—'}
+        </td>
+        <td>
+          ${s ? `<span class="badge" style="background:rgba(${hexToRgb(s.color)},.1);color:${s.color};">
+            <span class="badge-dot" style="background:${s.color}"></span>${s.name}
+          </span>` : '—'}
+        </td>
+        <td><span style="font-size:.75rem;color:var(--text2);">${ORIGIN_LABELS[l.origin]||l.origin}</span></td>
+        <td><span style="font-family:var(--font-mono);font-size:.75rem;color:var(--text3);">${fmt(l.date)}</span></td>
+        <td>
+          <div style="display:flex;gap:5px;">
+            <button class="btn btn-sm" onclick="openMoveModal('${l.id}')">Mover</button>
+            <button class="btn btn-sm btn-ghost btn-danger" onclick="deleteLead('${l.id}')">✕</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/* ════════════════════════════════
+   MODAL: NEW LEAD
+════════════════════════════════ */
+function openLeadModal(){
+  // Populate funnel select
+  const sel = document.getElementById('li-funnel');
+  sel.innerHTML = funnels.map(f=>`<option value="${f.id}">${f.icon} ${f.name}</option>`).join('');
+  sel.value = activeFunnelId || funnels[0]?.id || '';
+  populateStageSelect();
+  document.getElementById('li-date').value = today();
+  document.getElementById('li-handle').value = '';
+  openMo('mo-lead');
+  setTimeout(()=>document.getElementById('li-handle').focus(),150);
+}
+
+function populateStageSelect(){
+  const fid = document.getElementById('li-funnel').value;
+  const f = getFunnel(fid);
+  document.getElementById('li-stage').innerHTML = f
+    ? f.stages.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')
+    : '';
+}
+
+function saveLead(){
+  const handle = document.getElementById('li-handle').value.trim();
+  if(!handle) return toast('Digite o @Instagram do lead');
+  const funnelId = document.getElementById('li-funnel').value;
+  const stageId  = document.getElementById('li-stage').value;
+  const origin   = document.getElementById('li-origin').value;
+  const date     = document.getElementById('li-date').value;
+  const f = getFunnel(funnelId);
+  const isLast = f && f.stages[f.stages.length-1]?.id === stageId;
+  leads.push({id:uid(), handle, origin, funnelId, stageId, date, date_closed: isLast ? today() : null});
+  persist(); closeMo('mo-lead'); renderAll();
+  toast('Lead adicionado!');
+}
+
+/* ════════════════════════════════
+   MODAL: MOVE LEAD
+════════════════════════════════ */
+function openMoveModal(leadId){
+  movingLeadId = leadId;
+  const l = leads.find(x=>x.id===leadId);
+  if(!l) return;
+  document.getElementById('mm-sub').textContent = `Movendo: ${l.handle}`;
+  const sel = document.getElementById('mm-funnel');
+  sel.innerHTML = funnels.map(f=>`<option value="${f.id}">${f.icon} ${f.name}</option>`).join('');
+  sel.value = l.funnelId;
+  populateMoveStage();
+  document.getElementById('mm-stage').value = l.stageId;
+  openMo('mo-move');
+}
+
+function populateMoveStage(){
+  const fid = document.getElementById('mm-funnel').value;
+  const f = getFunnel(fid);
+  document.getElementById('mm-stage').innerHTML = f
+    ? f.stages.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')
+    : '';
+}
+
+function moveLead(){
+  const l = leads.find(x=>x.id===movingLeadId);
+  if(!l) return;
+  const newFunnelId = document.getElementById('mm-funnel').value;
+  const newStageId  = document.getElementById('mm-stage').value;
+  const f = getFunnel(newFunnelId);
+  const isLast = f && f.stages[f.stages.length-1]?.id === newStageId;
+  l.funnelId = newFunnelId;
+  l.stageId  = newStageId;
+  l.date_closed = isLast ? today() : null;
+  persist(); closeMo('mo-move'); renderAll();
+  toast('Lead movido!');
+}
+
+/* ════════════════════════════════
+   MODAL: FUNNEL
+════════════════════════════════ */
+let mfEditId = null;
+
+function openFunnelModal(){
+  mfEditId = null;
+  mfColor = PALETTE[Math.floor(Math.random()*PALETTE.length)];
+  document.getElementById('mf-title').textContent = 'Novo Funil';
+  document.getElementById('mf-name').value = '';
+  document.getElementById('mf-icon').value = '📋';
+  buildSwatches('mf-swatches', mfColor, c=>{ mfColor=c; });
+  tempStages = [
+    {id:uid(), name:'Novo Lead', color:'#2563eb'},
+    {id:uid(), name:'Em Contato', color:'#7c3aed'},
+    {id:uid(), name:'Proposta', color:'#d97706'},
+    {id:uid(), name:'Fechado',  color:'#2e7d5e'},
+  ];
+  renderStageEditor('mf-stages', tempStages);
+  openMo('mo-funnel');
+  setTimeout(()=>document.getElementById('mf-name').focus(),150);
+}
+
+function editFunnelModal(fid){
+  mfEditId = fid;
+  const f = getFunnel(fid);
+  if(!f) return;
+  mfColor = f.color;
+  document.getElementById('mf-title').textContent = 'Editar Funil';
+  document.getElementById('mf-name').value = f.name;
+  document.getElementById('mf-icon').value = f.icon;
+  buildSwatches('mf-swatches', mfColor, c=>{ mfColor=c; });
+  tempStages = f.stages.map(s=>({...s}));
+  renderStageEditor('mf-stages', tempStages);
+  openMo('mo-funnel');
+}
+
+function saveFunnel(){
+  const name = document.getElementById('mf-name').value.trim();
+  if(!name) return toast('Digite o nome do funil');
+  const stages = collectStages('mf-stages');
+  if(stages.length===0) return toast('Adicione ao menos uma etapa');
+  if(mfEditId){
+    const f = getFunnel(mfEditId);
+    f.name = name; f.icon = document.getElementById('mf-icon').value||'📋';
+    f.color = mfColor; f.stages = stages;
+  } else {
+    funnels.push({id:uid(), name, icon: document.getElementById('mf-icon').value||'📋', color:mfColor, stages});
+    activeFunnelId = funnels[funnels.length-1].id;
+  }
+  persist(); closeMo('mo-funnel'); renderAll();
+  toast(mfEditId ? 'Funil atualizado!' : 'Funil criado!');
+}
+
+function deleteFunnel(fid){
+  if(!confirm('Excluir este funil e todos os seus leads?')) return;
+  funnels = funnels.filter(f=>f.id!==fid);
+  leads   = leads.filter(l=>l.funnelId!==fid);
+  if(activeFunnelId===fid) activeFunnelId = funnels[0]?.id||null;
+  persist(); renderAll();
+  toast('Funil excluído');
+}
+
+/* ════════════════════════════════
+   MODAL: EDIT STAGES (kanban quick)
+════════════════════════════════ */
+function openStageModal(){
+  const f = getFunnel(activeFunnelId);
+  if(!f) return;
+  document.getElementById('ms-title').textContent = `Etapas · ${f.icon} ${f.name}`;
+  tempStages = f.stages.map(s=>({...s}));
+  renderStageEditor('ms-stages', tempStages);
+  openMo('mo-stages');
+}
+
+function saveStages(){
+  const f = getFunnel(activeFunnelId);
+  if(!f) return;
+  const stages = collectStages('ms-stages');
+  if(stages.length===0) return toast('Adicione ao menos uma etapa');
+  // Fix orphan leads
+  leads.forEach(l=>{
+    if(l.funnelId===activeFunnelId && !stages.find(s=>s.id===l.stageId)){
+      l.stageId = stages[0].id;
+    }
+  });
+  f.stages = stages;
+  persist(); closeMo('mo-stages'); renderAll();
+  toast('Etapas salvas!');
+}
+
+/* ════════════════════════════════
+   STAGE EDITOR HELPERS
+════════════════════════════════ */
+const STAGE_COLORS = ['#2563eb','#7c3aed','#d97706','#2e7d5e','#e11d48','#0891b2','#c4603a','#4f46e5','#059669','#b45309'];
+
+function renderStageEditor(containerId, stages){
+  const el = document.getElementById(containerId);
+  el.innerHTML = stages.map((s,i)=>`
+    <div class="stage-editor-item" data-id="${s.id}">
+      <span class="stage-editor-drag" title="Drag">⠿</span>
+      <input type="color" class="stage-editor-color" value="${s.color}" data-idx="${i}" onchange="updateTempStageColor(this,'${containerId}')">
+      <input class="stage-editor-input" type="text" value="${s.name}" placeholder="Nome da etapa" data-idx="${i}">
+      <button onclick="removeStageRow(this,'${containerId}')" class="btn btn-sm btn-ghost btn-danger" style="flex-shrink:0;padding:4px 7px;">✕</button>
+    </div>
+  `).join('');
+  initStageDrag(containerId);
+}
+
+function addStageRow(){
+  const colors = STAGE_COLORS;
+  const count = document.getElementById('mf-stages').querySelectorAll('.stage-editor-item').length;
+  const color = colors[count % colors.length];
+  const newRow = document.createElement('div');
+  newRow.className = 'stage-editor-item';
+  newRow.dataset.id = uid();
+  newRow.innerHTML = `
+    <span class="stage-editor-drag">⠿</span>
+    <input type="color" class="stage-editor-color" value="${color}" data-idx="${count}" onchange="updateTempStageColor(this,'mf-stages')">
+    <input class="stage-editor-input" type="text" value="" placeholder="Nome da etapa">
+    <button onclick="removeStageRow(this,'mf-stages')" class="btn btn-sm btn-ghost btn-danger" style="flex-shrink:0;padding:4px 7px;">✕</button>
+  `;
+  document.getElementById('mf-stages').appendChild(newRow);
+  newRow.querySelector('input[type=text]').focus();
+}
+
+function addStageRowToModal(containerId){
+  const colors = STAGE_COLORS;
+  const count = document.getElementById(containerId).querySelectorAll('.stage-editor-item').length;
+  const color = colors[count % colors.length];
+  const newRow = document.createElement('div');
+  newRow.className = 'stage-editor-item';
+  newRow.dataset.id = uid();
+  newRow.innerHTML = `
+    <span class="stage-editor-drag">⠿</span>
+    <input type="color" class="stage-editor-color" value="${color}">
+    <input class="stage-editor-input" type="text" value="" placeholder="Nome da etapa">
+    <button onclick="removeStageRow(this,'${containerId}')" class="btn btn-sm btn-ghost btn-danger" style="flex-shrink:0;padding:4px 7px;">✕</button>
+  `;
+  document.getElementById(containerId).appendChild(newRow);
+  newRow.querySelector('input[type=text]').focus();
+}
+
+function removeStageRow(btn, containerId){
+  const list = document.getElementById(containerId);
+  if(list.querySelectorAll('.stage-editor-item').length<=1) return toast('O funil precisa de ao menos uma etapa');
+  btn.closest('.stage-editor-item').remove();
+}
+
+function updateTempStageColor(input, containerId){}
+
+function collectStages(containerId){
+  return Array.from(document.getElementById(containerId).querySelectorAll('.stage-editor-item')).map((el,i)=>{
+    const id    = el.dataset.id || uid();
+    const color = el.querySelector('input[type=color]').value;
+    const name  = el.querySelector('input[type=text]').value.trim() || `Etapa ${i+1}`;
+    return {id, name, color};
+  });
+}
+
+// Simple drag-and-drop for stage rows
+function initStageDrag(containerId){
+  const list = document.getElementById(containerId);
+  let dragging = null;
+  list.querySelectorAll('.stage-editor-drag').forEach(handle=>{
+    const item = handle.closest('.stage-editor-item');
+    item.setAttribute('draggable','true');
+    item.addEventListener('dragstart', e=>{ dragging=item; setTimeout(()=>item.style.opacity='.4',0); });
+    item.addEventListener('dragend',   ()=>{ dragging=null; item.style.opacity=''; });
+    item.addEventListener('dragover',  e=>{ e.preventDefault(); const after=getDragAfter(list,e.clientY); if(after) list.insertBefore(dragging,after); else list.appendChild(dragging); });
+  });
+}
+
+function getDragAfter(container, y){
+  const items = [...container.querySelectorAll('.stage-editor-item:not([style*="opacity: 0.4"])')];
+  return items.reduce((closest,el)=>{
+    const box=el.getBoundingClientRect();
+    const offset=y-box.top-box.height/2;
+    return offset<0 && offset > closest.offset ? {offset,el} : closest;
+  },{offset:Number.NEGATIVE_INFINITY}).el;
+}
+
+/* ════════════════════════════════
+   COLOR SWATCHES
+════════════════════════════════ */
+function buildSwatches(containerId, selected, onSelect){
+  const wrap = document.getElementById(containerId);
+  wrap.innerHTML = PALETTE.map(c=>`
+    <div class="color-swatch ${c===selected?'selected':''}" style="background:${c}" data-c="${c}" onclick="selectSwatch(this,'${containerId}',event)"></div>
+  `).join('');
+  wrap._onSelect = onSelect;
+}
+
+function selectSwatch(el, containerId, e){
+  const wrap = document.getElementById(containerId);
+  wrap.querySelectorAll('.color-swatch').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  if(wrap._onSelect) wrap._onSelect(el.dataset.c);
+}
+
+/* ════════════════════════════════
+   LEAD ACTIONS
+════════════════════════════════ */
+function deleteLead(id){
+  if(!confirm('Excluir este lead?')) return;
+  leads = leads.filter(l=>l.id!==id);
+  persist(); renderAll();
+  toast('Lead excluído');
+}
+
+/* ════════════════════════════════
+   MODAL HELPERS
+════════════════════════════════ */
+function openMo(id){ document.getElementById(id).classList.add('open'); }
+function closeMo(id){ document.getElementById(id).classList.remove('open'); }
+
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.querySelectorAll('.mo.open').forEach(m=>m.classList.remove('open')); });
+document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); }));
+
+/* ════════════════════════════════
+   TOAST
+════════════════════════════════ */
+function toast(msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+/* ════════════════════════════════
+   INIT
+════════════════════════════════ */
+document.getElementById('dash-date').textContent =
+  new Date().toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+
+renderDashboard();
+updatePills();
+
+// Wire up ESC on modals that were added after the initial querySelectorAll
+setTimeout(()=>{
+  document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',function(e){ if(e.target===this) this.classList.remove('open'); }));
+},100);
+</script>
+</body>
+</html>
